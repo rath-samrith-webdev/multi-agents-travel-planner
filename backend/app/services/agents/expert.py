@@ -25,13 +25,13 @@ def run(plan: dict) -> dict:
     Output ONLY the JSON.
     """
 
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}]
-    )
-
-    content = response.choices[0].message.content
     try:
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": prompt}]
+        )
+
+        content = response.choices[0].message.content
         if "```json" in content:
             content = content.split("```json")[1].split("```")[0]
         elif "```" in content:
@@ -40,7 +40,7 @@ def run(plan: dict) -> dict:
         new_plan["metadata"]["expert_curated"] = True
         return new_plan
     except Exception as e:
-        print(f"Error parsing expert g4f: {e}")
+        print(f"Error in expert g4f generation: {e}")
         plan["metadata"]["expert_curated"] = False
         plan["metadata"]["reasoning"] = "Expert curation failed."
         return plan

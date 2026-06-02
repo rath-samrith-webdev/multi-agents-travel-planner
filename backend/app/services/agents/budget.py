@@ -25,13 +25,13 @@ def run(plan: dict, budget: float) -> dict:
     Output ONLY the JSON.
     """
 
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}]
-    )
-
-    content = response.choices[0].message.content
     try:
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": prompt}]
+        )
+
+        content = response.choices[0].message.content
         if "```json" in content:
             content = content.split("```json")[1].split("```")[0]
         elif "```" in content:
@@ -40,7 +40,7 @@ def run(plan: dict, budget: float) -> dict:
         new_plan["metadata"]["budget_checked"] = True
         return new_plan
     except Exception as e:
-        print(f"Error parsing budget g4f: {e}")
+        print(f"Error in budget g4f generation: {e}")
         plan["metadata"]["budget_checked"] = False
         plan["metadata"]["reasoning"] = "Budget optimization failed."
         return plan
