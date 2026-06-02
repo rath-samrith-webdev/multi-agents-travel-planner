@@ -40,23 +40,30 @@ def run(input_data: dict, memory_context: str) -> dict:
     }}
     """
 
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}]
-    )
-
-    content = response.choices[0].message.content
     try:
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": prompt}]
+        )
+
+        content = response.choices[0].message.content
         if "```json" in content:
             content = content.split("```json")[1].split("```")[0]
         elif "```" in content:
             content = content.split("```")[1].split("```")[0]
         return json.loads(content.strip())
     except Exception as e:
-        print(f"Error parsing g4f response: {e}")
+        print(f"Error generating g4f response: {e}")
         return {
             "destination": input_data.get("destination"),
             "days": input_data.get("days"),
-            "itinerary": [],
-            "metadata": {"source": "ErrorFallback", "reasoning": "Failed to parse AI response."}
+            "itinerary": [
+                {
+                    "day": 1,
+                    "activities": [
+                        {"name": f"Explore {input_data.get('destination')}", "time": "10:00 AM", "cost": 0, "notes": "Local tip: Relax and enjoy."}
+                    ]
+                }
+            ],
+            "metadata": {"source": "ErrorFallback", "reasoning": "Failed to generate AI response. Using fallback data."}
         }

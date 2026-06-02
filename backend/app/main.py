@@ -25,9 +25,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from app.routes import trips, users, auth, chat
+
 # Include Routers
+app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(trips.router, prefix="/api/trips", tags=["Trips"])
 app.include_router(users.router, prefix="/api/users", tags=["Users"])
+app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
 
 if __name__ == "__main__":
     import uvicorn
@@ -37,3 +41,4 @@ if __name__ == "__main__":
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the AI Travel Planner API"}
+

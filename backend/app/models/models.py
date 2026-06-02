@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Float, JSON, DateTime, ForeignKe
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.db.database import Base
+import uuid
 
 from sqlalchemy import Table
 
@@ -17,8 +18,10 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
+    google_id = Column(String, unique=True, index=True, nullable=True)
     username = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
+    picture = Column(String, nullable=True)
     preferences = Column(JSON, default={})
 
     # All trips the user is part of (as creator or participant)
@@ -28,13 +31,14 @@ class Trip(Base):
     __tablename__ = "trips"
 
     id = Column(Integer, primary_key=True, index=True)
-    creator_id = Column(Integer, ForeignKey("users.id")) # Original creator
+    creator_id = Column(Integer, ForeignKey("users.id"))
     destination = Column(String)
     days = Column(Integer)
     budget = Column(Float)
     itinerary = Column(JSON)
     metadata_info = Column(JSON)
     created_at = Column(DateTime, default=datetime.utcnow)
+    invite_token = Column(String, unique=True, index=True, default=lambda: str(uuid.uuid4()))
 
     participants = relationship("User", secondary=trip_users, back_populates="trips")
     messages = relationship("ChatMessage", back_populates="trip", cascade="all, delete-orphan")
