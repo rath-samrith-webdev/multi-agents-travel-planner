@@ -3,12 +3,19 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
 
-# Use SQLite for local development as requested
-DATABASE_URL = "sqlite:///./travel_planner.db"
+# Use environment variable for database URL if available, otherwise fallback to local SQLite
+# Note: SQLite will not persist across Vercel serverless function calls.
+# It is recommended to use a managed database like Vercel Postgres, Supabase, or ElephantSQL for production.
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./travel_planner.db")
 
-engine = create_engine(
-    DATABASE_URL, connect_args={"check_same_thread": False}
-)
+# If using SQLite, ensure the file is created in a writable directory if needed, 
+# although /tmp is the only writable directory in Vercel.
+if DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(
+        DATABASE_URL, connect_args={"check_same_thread": False}
+    )
+else:
+    engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()

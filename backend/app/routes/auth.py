@@ -10,7 +10,7 @@ router = APIRouter()
 class GoogleAuthRequest(BaseModel):
     token: str
 
-@router.post("/google")
+@router.post("/google", summary="Authenticate with Google", description="Verify a Google ID token and return an internal JWT access token.")
 async def google_auth(request: GoogleAuthRequest, db: Session = Depends(get_db)):
     # Verify token
     idinfo = verify_google_token(request.token)

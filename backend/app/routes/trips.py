@@ -11,7 +11,7 @@ from g4f.client import Client
 
 router = APIRouter()
 
-@router.post("/generate", response_model=TripResponse)
+@router.post("/generate", response_model=TripResponse, summary="Generate a new trip", description="Uses the AI Multi-Agent system to create a tailored travel itinerary.")
 async def create_trip(trip_req: TripRequest, db: Session = Depends(get_db), current_user_id: int = Depends(get_current_user_id)):
     """
     Generate and save a new travel itinerary.
