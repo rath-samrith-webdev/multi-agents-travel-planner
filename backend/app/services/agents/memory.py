@@ -1,17 +1,26 @@
-import faiss
-import numpy as np
+try:
+    import faiss
+    import numpy as np
+    from sentence_transformers import SentenceTransformer
+    HAS_ML_DEPS = True
+except ImportError:
+    HAS_ML_DEPS = False
+
 import os
 import pickle
-from sentence_transformers import SentenceTransformer
 
 # Use a lightweight embedding model
-# Note: sentence-transformers and FAISS are heavy and might exceed Vercel's serverless limits.
-# Consider using an external vector database like Pinecone or Weaviate for production.
-try:
-    model = SentenceTransformer('all-MiniLM-L6-v2')
-except Exception as e:
-    print(f"Warning: Could not load SentenceTransformer: {e}")
-    model = None
+# Note: sentence-transformers and FAISS are heavy and exceed Vercel's 500MB Lambda limit.
+# They have been removed from requirements.txt for Vercel deployment.
+# Consider using an external vector database like Pinecone or Weaviate for production memory.
+model = None
+if HAS_ML_DEPS:
+    try:
+        model = SentenceTransformer('all-MiniLM-L6-v2')
+    except Exception as e:
+        print(f"Warning: Could not load SentenceTransformer: {e}")
+else:
+    print("Memory Agent running in limited mode: ML dependencies (faiss, numpy, sentence-transformers) not found.")
 
 # In Vercel, files can only be written to /tmp
 # We use /tmp if we are in a serverless environment (checking for VERCEL env var)

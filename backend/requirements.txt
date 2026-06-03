@@ -1,3 +1,4 @@
+# Core dependencies
 fastapi
 uvicorn
 pydantic
@@ -9,6 +10,8 @@ requests
 python-jose
 websockets
 g4f
-faiss-cpu
-numpy
-sentence-transformers
+
+# Machine learning dependencies (removed to fit Vercel 500MB limit)
+# faiss-cpu
+# numpy
+# sentence-transformers
