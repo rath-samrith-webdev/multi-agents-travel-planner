@@ -3,13 +3,21 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
 
-# Use environment variable for database URL if available, otherwise fallback to local SQLite
-# Note: SQLite will not persist across Vercel serverless function calls.
-# It is recommended to use a managed database like Vercel Postgres, Supabase, or ElephantSQL for production.
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./travel_planner.db")
+# ---------------------------------------------------------------------------
+# Database path — Vercel serverless functions can only write to /tmp.
+# The VERCEL environment variable is automatically set by the Vercel runtime.
+# Locally, the db file is placed next to the project for convenience.
+# ---------------------------------------------------------------------------
+if os.getenv("VERCEL"):
+    # /tmp is the only writable directory in Vercel's serverless environment.
+    # Note: this is ephemeral and resets on each cold start / redeployment.
+    # For persistent storage, migrate to Supabase / Neon / PlanetScale PostgreSQL.
+    default_db_url = "sqlite:////tmp/travel_planner.db"
+else:
+    default_db_url = "sqlite:///./travel_planner.db"
 
-# If using SQLite, ensure the file is created in a writable directory if needed, 
-# although /tmp is the only writable directory in Vercel.
+DATABASE_URL = os.getenv("DATABASE_URL", default_db_url)
+
 if DATABASE_URL.startswith("sqlite"):
     engine = create_engine(
         DATABASE_URL, connect_args={"check_same_thread": False}
