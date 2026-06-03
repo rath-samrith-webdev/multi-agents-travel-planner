@@ -61,7 +61,7 @@ docker-compose up -d
 
 5.  **Run the FastAPI server:**
     ```bash
-    python -m app.main
+    python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
     ```
     The backend should now be running at `http://127.0.0.1:8000`.
 
