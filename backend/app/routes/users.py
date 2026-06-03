@@ -6,7 +6,7 @@ from app.auth.security import get_current_user_id
 
 router = APIRouter()
 
-@router.post("/preferences")
+@router.post("/preferences", summary="Update user preferences", description="Store user travel preferences globally for future AI generations.")
 async def update_preferences(preferences: dict, db: Session = Depends(get_db), current_user_id: int = Depends(get_current_user_id)):
     """
     Update global preferences for a user.

@@ -5,5 +5,10 @@ sqlalchemy
 python-dotenv
 openai
 google-auth
+requests
 python-jose
 websockets
+g4f
+faiss-cpu
+numpy
+sentence-transformers
