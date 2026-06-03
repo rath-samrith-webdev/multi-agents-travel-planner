@@ -29,6 +29,7 @@ export default function Login() {
       navigate(redirectTo)
     } catch (error) {
       const message = error instanceof Error ? error.message : "Authentication failed."
+      console.error("Error during Google login:", error);
       alert(message)
     }
   }
