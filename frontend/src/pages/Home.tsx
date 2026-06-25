@@ -62,26 +62,26 @@ export default function Home() {
   }
 
   return (
-    <div className="flex min-h-[80vh] flex-col items-center justify-center bg-gray-50/50 px-4 py-12">
+    <div className="flex min-h-[80vh] flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 px-4 py-12">
       <div className="mb-12 text-center">
-        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-1.5 text-sm font-bold text-blue-600 shadow-sm">
+        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-sm font-bold text-primary shadow-sm">
           <PlaneTakeoff size={16} />
           Multi-Agent AI Travel Planner
         </div>
 
-        <h1 className="mb-6 text-5xl font-extrabold leading-tight tracking-tight text-gray-900 md:text-6xl">
+        <h1 className="mb-6 text-5xl font-extrabold leading-tight tracking-tight text-foreground md:text-6xl">
           Where to{" "}
-          <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             Next?
           </span>
         </h1>
 
-        <p className="mx-auto max-w-2xl text-xl leading-relaxed text-gray-500">
+        <p className="mx-auto max-w-2xl text-xl leading-relaxed text-muted-foreground">
           Planner, Budget, and Local Expert agents collaborate to draft a travel plan tailored to you.
         </p>
       </div>
 
-      <Card className="w-full max-w-xl border-none shadow-2xl ring-1 ring-gray-200/50">
+      <Card className="w-full max-w-xl border-none shadow-2xl ring-1 ring-border bg-card/80 backdrop-blur-sm">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">Trip Details</CardTitle>
           <CardDescription>Enter your preferences and let the agents build the itinerary.</CardDescription>
@@ -91,8 +91,8 @@ export default function Home() {
           <form onSubmit={handleGenerate} className="space-y-8">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="col-span-full space-y-2">
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                  <MapPin size={16} className="text-blue-500" />
+                <label className="flex items-center gap-2 text-sm font-bold text-foreground">
+                  <MapPin size={16} className="text-primary" />
                   Destination
                 </label>
                 <Input
@@ -100,40 +100,40 @@ export default function Home() {
                   placeholder="e.g. Kyoto, Japan"
                   value={destination}
                   onChange={(event) => setDestination(event.target.value)}
-                  className="h-12 rounded-xl bg-gray-50/50"
+                  className="h-12 bg-muted/50"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                  <DollarSign size={16} className="text-blue-500" />
+                <label className="flex items-center gap-2 text-sm font-bold text-foreground">
+                  <DollarSign size={16} className="text-primary" />
                   Budget ($)
                 </label>
                 <Input
                   type="number"
                   value={budget}
                   onChange={(event) => setBudget(event.target.value)}
-                  className="h-12 rounded-xl bg-gray-50/50"
+                  className="h-12 bg-muted/50"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                  <Calendar size={16} className="text-blue-500" />
+                <label className="flex items-center gap-2 text-sm font-bold text-foreground">
+                  <Calendar size={16} className="text-primary" />
                   Duration (Days)
                 </label>
                 <Input
                   type="number"
                   value={days}
                   onChange={(event) => setDays(event.target.value)}
-                  className="h-12 rounded-xl bg-gray-50/50"
+                  className="h-12 bg-muted/50"
                 />
               </div>
             </div>
 
             <div className="space-y-3">
-              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                <Heart size={16} className="text-pink-500" />
+              <label className="flex items-center gap-2 text-sm font-bold text-foreground">
+                <Heart size={16} className="text-rose-500" />
                 Preferences
               </label>
 
@@ -145,7 +145,7 @@ export default function Home() {
                     <Badge
                       key={preference}
                       variant={selected ? "default" : "secondary"}
-                      className={selected ? "cursor-pointer rounded-full bg-blue-600 px-4 py-1.5" : "cursor-pointer rounded-full bg-gray-100 px-4 py-1.5 hover:bg-gray-200"}
+                      className={selected ? "cursor-pointer rounded-full px-4 py-1.5 transition-all hover:scale-105" : "cursor-pointer rounded-full px-4 py-1.5 transition-all hover:scale-105 hover:bg-accent"}
                       onClick={() => togglePreference(preference)}
                     >
                       {preference}
@@ -158,7 +158,7 @@ export default function Home() {
             <Button
               type="submit"
               disabled={isLoading || !destination.trim()}
-              className="h-14 w-full rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-700 text-lg font-bold shadow-lg hover:scale-[1.01]"
+              className="h-14 w-full bg-gradient-to-r from-primary to-primary/80 text-lg font-bold shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
             >
               {isLoading ? (
                 <span className="flex items-center gap-2">
