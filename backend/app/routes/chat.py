@@ -7,10 +7,13 @@ Architecture:
   - On message: save to DB, broadcast to all trip participants
   - On disconnect: remove from pool, broadcast "user_left"
 """
+# pyrefly: ignore [missing-import]
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException, Query
+# pyrefly: ignore [missing-import]
 from sqlalchemy.orm import Session
 from typing import Dict, List
 from app.db.database import get_db
+# pyrefly: ignore [missing-import]
 from app.models.models import ChatMessage, User, Trip
 from app.auth.security import create_access_token
 from jose import jwt, JWTError

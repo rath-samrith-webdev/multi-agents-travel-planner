@@ -1,5 +1,7 @@
 import json
-from g4f.client import Client
+# pyrefly: ignore [missing-import]
+from openai import OpenAI
+import os
 
 def run(plan: dict, budget: float) -> dict:
     """
@@ -7,9 +9,6 @@ def run(plan: dict, budget: float) -> dict:
     Optimizes the itinerary cost with XAI reasoning.
     """
     print(f"Budget Agent refining for budget {budget}...")
-
-    client = Client()
-
     prompt = f"""
     You are a financial travel advisor.
     Review this JSON itinerary and optimize it to fit a budget of ${budget}.
@@ -26,8 +25,14 @@ def run(plan: dict, budget: float) -> dict:
     """
 
     try:
+        client = OpenAI(
+            api_key=os.environ.get("GEMINI_API_KEY"),
+            base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+            timeout=30.0,
+            max_retries=1,
+        )
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gemini-2.5-flash",
             messages=[{"role": "user", "content": prompt}]
         )
 
