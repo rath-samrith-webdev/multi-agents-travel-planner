@@ -1,4 +1,6 @@
+# pyrefly: ignore [missing-import]
 from fastapi import APIRouter, HTTPException, Depends
+# pyrefly: ignore [missing-import]
 from sqlalchemy.orm import Session
 from app.models.schemas import TripRequest, TripResponse, ParticipantRequest, ChatMessageRequest
 from app.models.models import Trip, User, ChatMessage
@@ -7,7 +9,9 @@ from app.auth.security import get_current_user_id
 from app.services.ai_orchestrator import generate_trip
 import json
 import uuid
-from g4f.client import Client
+# pyrefly: ignore [missing-import]
+from openai import OpenAI
+import os
 
 router = APIRouter()
 
@@ -149,13 +153,12 @@ async def join_trip(invite_token: str, db: Session = Depends(get_db), current_us
 async def modify_plan_chat(trip_id: int, message: str, db: Session = Depends(get_db), current_user_id: int = Depends(get_current_user_id)):
     """
     Modify an existing plan via natural language chat.
-    Uses g4f to process the request.
+    Uses the Gemini API to process the request.
     """
     trip = db.query(Trip).filter(Trip.id == trip_id).first()
     if not trip:
         raise HTTPException(status_code=404, detail="Trip not found")
 
-    client = Client()
     prompt = f"""
     You are a travel assistant. A user wants to modify their itinerary.
     Current Itinerary: {json.dumps(trip.itinerary)}
@@ -166,8 +169,14 @@ async def modify_plan_chat(trip_id: int, message: str, db: Session = Depends(get
     """
 
     try:
+        client = OpenAI(
+            api_key=os.environ.get("GEMINI_API_KEY"),
+            base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+            timeout=30.0,
+            max_retries=1,
+        )
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gemini-2.5-flash",
             messages=[{"role": "user", "content": prompt}]
         )
         content = response.choices[0].message.content
@@ -183,6 +192,7 @@ async def modify_plan_chat(trip_id: int, message: str, db: Session = Depends(get
         return {"status": "success", "itinerary": updated_itinerary}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Chat failed: {str(e)}")
+
 
 
 @router.get("/{trip_id}/messages")

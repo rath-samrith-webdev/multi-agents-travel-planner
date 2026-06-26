@@ -1,5 +1,7 @@
 import json
-from g4f.client import Client
+# pyrefly: ignore [missing-import]
+from openai import OpenAI
+import os
 
 def run(plan: dict) -> dict:
     """
@@ -7,9 +9,6 @@ def run(plan: dict) -> dict:
     Final review for feasibility with XAI reasoning.
     """
     print("Critic Agent reviewing plan...")
-
-    client = Client()
-
     prompt = f"""
     Review this travel itinerary for feasibility and logical flow.
     Make minor adjustments if there are time conflicts.
@@ -26,8 +25,14 @@ def run(plan: dict) -> dict:
     """
 
     try:
+        client = OpenAI(
+            api_key=os.environ.get("GEMINI_API_KEY"),
+            base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+            timeout=30.0,
+            max_retries=1,
+        )
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gemini-2.5-flash",
             messages=[{"role": "user", "content": prompt}]
         )
 

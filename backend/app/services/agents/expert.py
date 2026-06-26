@@ -1,5 +1,6 @@
 import json
-from g4f.client import Client
+from openai import OpenAI
+import os
 
 def run(plan: dict) -> dict:
     """
@@ -7,8 +8,6 @@ def run(plan: dict) -> dict:
     Injects local gems with XAI reasoning.
     """
     print("Expert Agent adding local gems...")
-
-    client = Client()
 
     prompt = f"""
     You are a local tour guide.
@@ -26,8 +25,14 @@ def run(plan: dict) -> dict:
     """
 
     try:
+        client = OpenAI(
+            api_key=os.environ.get("GEMINI_API_KEY"),
+            base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+            timeout=30.0,
+            max_retries=1,
+        )
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gemini-2.5-flash",
             messages=[{"role": "user", "content": prompt}]
         )
 

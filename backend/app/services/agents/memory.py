@@ -1,6 +1,9 @@
 try:
+    # pyrefly: ignore [missing-import]
     import faiss
+    # pyrefly: ignore [missing-import]
     import numpy as np
+    # pyrefly: ignore [missing-import]
     from sentence_transformers import SentenceTransformer
     HAS_ML_DEPS = True
 except ImportError:

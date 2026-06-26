@@ -9,7 +9,7 @@ google-auth
 requests
 python-jose
 websockets
-g4f
+
 
 # Machine learning dependencies (removed to fit Vercel 500MB limit)
 # faiss-cpu
