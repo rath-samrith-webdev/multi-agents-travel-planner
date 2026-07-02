@@ -4,17 +4,12 @@ from sqlalchemy.orm import sessionmaker
 import os
 
 # ---------------------------------------------------------------------------
-# Database path — Vercel serverless functions can only write to /tmp.
-# The VERCEL environment variable is automatically set by the Vercel runtime.
-# Locally, the db file is placed next to the project for convenience.
+# Database path — defaults to a local file for dev. In production (a
+# persistent host, not serverless), set DATABASE_URL to a path on a mounted
+# disk (e.g. sqlite:////var/data/travel_planner.db on Render) so data survives
+# restarts/redeploys.
 # ---------------------------------------------------------------------------
-if os.getenv("VERCEL"):
-    # /tmp is the only writable directory in Vercel's serverless environment.
-    # Note: this is ephemeral and resets on each cold start / redeployment.
-    # For persistent storage, migrate to Supabase / Neon / PlanetScale PostgreSQL.
-    default_db_url = "sqlite:////tmp/travel_planner.db"
-else:
-    default_db_url = "sqlite:///./travel_planner.db"
+default_db_url = "sqlite:///./travel_planner.db"
 
 DATABASE_URL = os.getenv("DATABASE_URL", default_db_url)
 
