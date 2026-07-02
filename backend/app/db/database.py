@@ -4,12 +4,19 @@ from sqlalchemy.orm import sessionmaker
 import os
 
 # ---------------------------------------------------------------------------
-# Database path — defaults to a local file for dev. In production (a
-# persistent host, not serverless), set DATABASE_URL to a path on a mounted
-# disk (e.g. sqlite:////var/data/travel_planner.db on Render) so data survives
-# restarts/redeploys.
+# Database path.
+# - Local dev: a file next to the project.
+# - Render (target host): set DATABASE_URL to a path on the mounted disk
+#   (e.g. sqlite:////var/data/travel_planner.db) so data survives restarts.
+# - Vercel (legacy/interim host, until the Render cutover is complete): the
+#   filesystem is read-only outside /tmp, so fall back there automatically.
+#   This is ephemeral — data resets on every cold start — which is exactly
+#   why the backend is moving to Render; remove this branch once that's done.
 # ---------------------------------------------------------------------------
-default_db_url = "sqlite:///./travel_planner.db"
+if os.getenv("VERCEL"):
+    default_db_url = "sqlite:////tmp/travel_planner.db"
+else:
+    default_db_url = "sqlite:///./travel_planner.db"
 
 DATABASE_URL = os.getenv("DATABASE_URL", default_db_url)
 
