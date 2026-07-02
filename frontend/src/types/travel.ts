@@ -79,6 +79,7 @@ export interface GroupChatEvent {
   id?: string | number
   user_id?: number
   username?: string
+  picture?: string | null
   user?: GroupChatUser
   content?: string
   timestamp?: string

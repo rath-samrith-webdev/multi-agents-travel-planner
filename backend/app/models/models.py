@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, JSON, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, JSON, DateTime, ForeignKey, Index
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.db.database import Base
@@ -47,10 +47,15 @@ class ChatMessage(Base):
     __tablename__ = "chat_messages"
 
     id = Column(Integer, primary_key=True, index=True)
-    trip_id = Column(Integer, ForeignKey("trips.id"))
-    user_id = Column(Integer, ForeignKey("users.id"))
+    trip_id = Column(Integer, ForeignKey("trips.id"), index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
     content = Column(String)
     timestamp = Column(DateTime, default=datetime.utcnow)
 
     trip = relationship("Trip", back_populates="messages")
     user = relationship("User")
+
+    __table_args__ = (
+        # Matches the chat's actual access pattern: "last N messages for a trip, in order".
+        Index("ix_chat_messages_trip_id_timestamp", "trip_id", "timestamp"),
+    )

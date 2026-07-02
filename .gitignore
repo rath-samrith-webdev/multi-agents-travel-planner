@@ -50,3 +50,7 @@ env/
 
 # Vercel
 .vercel/
+travel_memory.db
+/backend/travel_memory.db
+/backend/travel_memory.index
+/backend/travel_memory_meta.pkl

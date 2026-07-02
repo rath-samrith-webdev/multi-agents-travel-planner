@@ -1,12 +1,13 @@
 # pyrefly: ignore [missing-import]
 from fastapi import APIRouter, HTTPException, Depends
 # pyrefly: ignore [missing-import]
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from app.models.schemas import TripRequest, TripResponse, ParticipantRequest, ChatMessageRequest
 from app.models.models import Trip, User, ChatMessage
 from app.db.database import get_db
 from app.auth.security import get_current_user_id
 from app.services.ai_orchestrator import generate_trip
+from app.routes.chat import manager, _serialize_message
 import json
 import uuid
 # pyrefly: ignore [missing-import]
@@ -196,9 +197,15 @@ async def modify_plan_chat(trip_id: int, message: str, db: Session = Depends(get
 
 
 @router.get("/{trip_id}/messages")
-async def get_messages(trip_id: int, db: Session = Depends(get_db), current_user_id: int = Depends(get_current_user_id)):
+async def get_messages(
+    trip_id: int,
+    limit: int = 50,
+    offset: int = 0,
+    db: Session = Depends(get_db),
+    current_user_id: int = Depends(get_current_user_id),
+):
     """
-    Get all chat messages for a trip (participants only).
+    Get chat messages for a trip (participants only), oldest first, paginated.
     """
     trip = db.query(Trip).filter(Trip.id == trip_id).first()
     if not trip:
@@ -208,12 +215,21 @@ async def get_messages(trip_id: int, db: Session = Depends(get_db), current_user
     if current_user_id not in participant_ids:
         raise HTTPException(status_code=403, detail="You are not a participant of this trip")
 
-    messages = db.query(ChatMessage).filter(ChatMessage.trip_id == trip_id).order_by(ChatMessage.timestamp).all()
+    limit = max(1, min(limit, 200))
+    messages = (
+        db.query(ChatMessage)
+        .options(joinedload(ChatMessage.user))
+        .filter(ChatMessage.trip_id == trip_id)
+        .order_by(ChatMessage.timestamp)
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
     return [
         {
             "id": m.id,
             "user_id": m.user_id,
-            "username": m.user.username,
+            "username": m.user.username if m.user else "Unknown",
             "picture": m.user.picture if m.user else None,
             "content": m.content,
             "timestamp": m.timestamp
@@ -242,6 +258,10 @@ async def send_message(trip_id: int, msg_req: ChatMessageRequest, db: Session = 
     db.add(new_msg)
     db.commit()
     db.refresh(new_msg)
+
+    # Broadcast over the same WebSocket connection manager the chat.py endpoint
+    # uses, so a message sent via REST also reaches live-connected clients.
+    await manager.broadcast(trip_id, _serialize_message(new_msg))
 
     return {"status": "success", "id": new_msg.id}
 

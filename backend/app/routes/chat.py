@@ -10,21 +10,17 @@ Architecture:
 # pyrefly: ignore [missing-import]
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException, Query
 # pyrefly: ignore [missing-import]
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import Dict, List
 from app.db.database import get_db
 # pyrefly: ignore [missing-import]
 from app.models.models import ChatMessage, User, Trip
-from app.auth.security import create_access_token
+from app.auth.security import SECRET_KEY, ALGORITHM
 from jose import jwt, JWTError
 from datetime import datetime
 import json
-import os
 
 router = APIRouter()
-
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "a_very_secret_key_for_development")
-ALGORITHM = "HS256"
 
 
 # ---------------------------------------------------------------------------
@@ -130,19 +126,26 @@ async def chat_ws(
         await websocket.close(code=4004)
         return
 
+    # 3. Verify the user is a participant of this trip
+    participant_ids = {p.id for p in trip.participants}
+    if user.id not in participant_ids:
+        await websocket.close(code=4003)
+        return
+
     user_info = {
         "id": user.id,
         "username": user.username,
         "picture": user.picture,
     }
 
-    # 3. Accept connection
+    # 4. Accept connection
     await manager.connect(trip_id, websocket, user_info)
 
     try:
-        # 4. Send message history (last 50 messages)
+        # 5. Send message history (last 50 messages)
         history = (
             db.query(ChatMessage)
+            .options(joinedload(ChatMessage.user))
             .filter(ChatMessage.trip_id == trip_id)
             .order_by(ChatMessage.timestamp.asc())
             .limit(50)
@@ -154,14 +157,14 @@ async def chat_ws(
             "online_users": manager.online_users(trip_id),
         })
 
-        # 5. Broadcast join event to other participants
+        # 6. Broadcast join event to other participants
         await manager.broadcast(trip_id, {
             "type": "user_joined",
             "user": user_info,
             "online_users": manager.online_users(trip_id),
         }, exclude=websocket)
 
-        # 6. Main message loop
+        # 7. Main message loop
         while True:
             raw = await websocket.receive_text()
             try:
