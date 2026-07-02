@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   Check,
   Clock,
@@ -37,22 +37,22 @@ export default function Itinerary() {
   const [participants, setParticipants] = useState<Participant[]>([])
   const [copied, setCopied] = useState(false)
 
-  useEffect(() => {
-    async function loadParticipants() {
-      if (!plan?.id) {
-        return
-      }
-
-      try {
-        const nextParticipants = await getTripParticipants(plan.id)
-        setParticipants(nextParticipants)
-      } catch (error) {
-        console.error("Failed to load participants", error)
-      }
+  const loadParticipants = useCallback(async () => {
+    if (!plan?.id) {
+      return
     }
 
-    void loadParticipants()
+    try {
+      const nextParticipants = await getTripParticipants(plan.id)
+      setParticipants(nextParticipants)
+    } catch (error) {
+      console.error("Failed to load participants", error)
+    }
   }, [plan?.id])
+
+  useEffect(() => {
+    void loadParticipants()
+  }, [loadParticipants])
 
   const isCreator = useMemo(
     () => Boolean(user && plan?.creator_id && user.id === plan.creator_id),
@@ -291,7 +291,7 @@ export default function Itinerary() {
               </CardContent>
             </Card>
 
-            <GroupChat tripId={plan.id} />
+            <GroupChat tripId={plan.id} onRosterChange={loadParticipants} />
 
             <Card className="overflow-hidden border-none shadow-lg ring-1 ring-gray-100">
               <CardHeader className="pb-4">

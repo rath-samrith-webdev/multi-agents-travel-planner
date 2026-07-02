@@ -22,12 +22,17 @@ import { Input } from "@/components/ui/input.tsx"
 
 const TYPING_TIMEOUT_MS = 2000
 const RECONNECT_DELAYS = [1000, 2000, 5000, 10000]
+// Codes the server uses for auth/authorization failures — retrying with the same token would just loop forever.
+const AUTH_FAILURE_CLOSE_CODES = new Set([4001, 4003, 4004])
 
 interface GroupChatProps {
   tripId: number
+  /** Called whenever the trip roster may have changed (someone joined/left), so the
+   *  caller can refresh its own separate participants list. */
+  onRosterChange?: () => void
 }
 
-export default function GroupChat({ tripId }: GroupChatProps) {
+export default function GroupChat({ tripId, onRosterChange }: GroupChatProps) {
   const { token, user } = useAuth()
   const [messages, setMessages] = useState<GroupChatMessage[]>([])
   const [newMessage, setNewMessage] = useState("")
@@ -36,7 +41,7 @@ export default function GroupChat({ tripId }: GroupChatProps) {
     Array<{ user_id: number | undefined; username: string | undefined }>
   >([])
   const [status, setStatus] = useState<
-    "connecting" | "connected" | "disconnected"
+    "connecting" | "connected" | "disconnected" | "auth-error"
   >("connecting")
 
   const wsRef = useRef<WebSocket | null>(null)
@@ -70,25 +75,38 @@ export default function GroupChat({ tripId }: GroupChatProps) {
         case "message":
           setMessages((current) => {
             const alreadyExists = current.some(
-              (message) => message.id === data.id
+              (message) => !message.optimistic && message.id === data.id
             )
 
             if (alreadyExists || !data.content) {
               return current
             }
 
-            return [
-              ...current,
-              {
-                id: data.id ?? `message-${Date.now()}`,
-                type: "message",
-                user_id: data.user_id,
-                username: data.username,
-                content: data.content,
-                picture: data.user?.picture,
-                timestamp: data.timestamp ?? new Date().toISOString(),
-              },
-            ]
+            const confirmedMessage: GroupChatMessage = {
+              id: data.id ?? `message-${Date.now()}`,
+              type: "message",
+              user_id: data.user_id,
+              username: data.username,
+              content: data.content,
+              picture: data.picture,
+              timestamp: data.timestamp ?? new Date().toISOString(),
+            }
+
+            // Replace the optimistic bubble this confirms rather than appending a duplicate.
+            const optimisticIndex = current.findIndex(
+              (message) =>
+                message.optimistic &&
+                message.user_id === data.user_id &&
+                message.content === data.content
+            )
+
+            if (optimisticIndex !== -1) {
+              const next = [...current]
+              next[optimisticIndex] = confirmedMessage
+              return next
+            }
+
+            return [...current, confirmedMessage]
           })
 
           if (data.user_id) {
@@ -105,6 +123,7 @@ export default function GroupChat({ tripId }: GroupChatProps) {
           appendSystemMessage(
             `${data.user?.username ?? "A traveler"} joined the chat`
           )
+          onRosterChange?.()
           break
 
         case "user_left":
@@ -112,6 +131,7 @@ export default function GroupChat({ tripId }: GroupChatProps) {
           appendSystemMessage(
             `${data.user?.username ?? "A traveler"} left the chat`
           )
+          onRosterChange?.()
           break
 
         case "typing":
@@ -141,7 +161,7 @@ export default function GroupChat({ tripId }: GroupChatProps) {
           break
       }
     },
-    [appendSystemMessage]
+    [appendSystemMessage, onRosterChange]
   )
 
   const connect = useCallback(
@@ -156,11 +176,17 @@ export default function GroupChat({ tripId }: GroupChatProps) {
       wsRef.current = ws
 
       ws.onopen = () => {
+        if (wsRef.current !== ws) {
+          return
+        }
         reconnectAttemptRef.current = 0
         setStatus("connected")
       }
 
       ws.onmessage = (event) => {
+        if (wsRef.current !== ws) {
+          return
+        }
         try {
           handleServerEvent(JSON.parse(event.data) as GroupChatEvent)
         } catch (error) {
@@ -172,8 +198,16 @@ export default function GroupChat({ tripId }: GroupChatProps) {
         console.error("WebSocket error", error)
       }
 
-      ws.onclose = () => {
-        if (!mountedRef.current) {
+      ws.onclose = (event) => {
+        // Ignore stale sockets: if a newer connection has already replaced this one
+        // (e.g. StrictMode double-invoke, or tripId/token changing), this handler
+        // must not touch shared state or schedule its own zombie reconnect.
+        if (wsRef.current !== ws || !mountedRef.current) {
+          return
+        }
+
+        if (AUTH_FAILURE_CLOSE_CODES.has(event.code)) {
+          setStatus("auth-error")
           return
         }
 
@@ -281,7 +315,9 @@ export default function GroupChat({ tripId }: GroupChatProps) {
                 ? "Live"
                 : status === "connecting"
                   ? "Connecting…"
-                  : "Reconnecting…"}
+                  : status === "auth-error"
+                    ? "Session expired"
+                    : "Reconnecting…"}
             </span>
 
             <Badge
