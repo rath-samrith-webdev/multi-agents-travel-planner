@@ -5,7 +5,6 @@ import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import text
 from app.db.database import engine, Base
 from app.models import models  # noqa: F401 — ensure all models are registered
 
@@ -20,26 +19,10 @@ _raw_origins = os.getenv(
 allowed_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
 
 
-def _ensure_indexes():
-    """
-    Base.metadata.create_all only creates missing tables — it never adds
-    indexes to a table that already exists. Run these idempotently so
-    databases created before an index was added still pick it up.
-    """
-    with engine.begin() as conn:
-        conn.execute(text("CREATE INDEX IF NOT EXISTS ix_chat_messages_trip_id ON chat_messages (trip_id)"))
-        conn.execute(text("CREATE INDEX IF NOT EXISTS ix_chat_messages_user_id ON chat_messages (user_id)"))
-        conn.execute(text(
-            "CREATE INDEX IF NOT EXISTS ix_chat_messages_trip_id_timestamp "
-            "ON chat_messages (trip_id, timestamp)"
-        ))
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Runs on every cold start — creates tables if they don't exist yet.
     Base.metadata.create_all(bind=engine)
-    _ensure_indexes()
     yield
 
 

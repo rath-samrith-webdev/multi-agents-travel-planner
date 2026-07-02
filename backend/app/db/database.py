@@ -4,16 +4,14 @@ from sqlalchemy.orm import sessionmaker
 import os
 
 # ---------------------------------------------------------------------------
-# Database path.
-# - Local dev: a file next to the project.
-# - Render (target host): set DATABASE_URL to a path on the mounted disk
-#   (e.g. sqlite:////var/data/travel_planner.db) so data survives restarts.
-# - Vercel (legacy/interim host, until the Render cutover is complete): the
-#   filesystem is read-only outside /tmp, so fall back there automatically.
-#   This is ephemeral — data resets on every cold start — which is exactly
-#   why the backend is moving to Render; remove this branch once that's done.
+# Database path — Vercel serverless functions can only write to /tmp.
+# The VERCEL environment variable is automatically set by the Vercel runtime.
+# Locally, the db file is placed next to the project for convenience.
 # ---------------------------------------------------------------------------
 if os.getenv("VERCEL"):
+    # /tmp is the only writable directory in Vercel's serverless environment.
+    # Note: this is ephemeral and resets on each cold start / redeployment.
+    # For persistent storage, migrate to Supabase / Neon / PlanetScale PostgreSQL.
     default_db_url = "sqlite:////tmp/travel_planner.db"
 else:
     default_db_url = "sqlite:///./travel_planner.db"
